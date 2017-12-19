@@ -1,0 +1,151 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Data.SqlClient;
+using System.Net.Mail;
+using System.Threading;
+using System.IO;
+using System.Diagnostics;
+using System.Windows.Forms;
+
+namespace WindowsApplication1
+{
+    static class Program
+    {
+        static int Main(string[] args)
+        {
+            getData();
+            return 0;
+        }
+
+        static void getData()
+        {
+            try
+            {
+                string strConnectionString = Properties.Settings.Default.ibossConn;
+                //Data Source=10.55.6.19;Initial Catalog=iboss2;Persist Security Info=True;User ID=sa;Password=iasia31
+
+                using (SqlConnection conn = new SqlConnection(strConnectionString))
+                {
+                    conn.Open();
+
+
+                    String Sql = @"  SELECT hab.ts,
+                                       hab.account_no,
+                                       hab.company_code,
+                                       hab.ccy,
+                                       hab.day_open,
+	                                   hab.month_open,
+	                                   hab.ledger_out,
+	                                   hab.t2_net_bs,
+	                                   hab.accrued_cr_int,
+                                       ma.credit_limit,
+                                       ma.trade_limit
+                                FROM   hst_account_balance AS hab
+                                       INNER JOIN MST_ACCOUNT AS ma
+                                               ON ma.account_no = hab.account_no
+                                WHERE  sys_date = '2017-11-22' ";
+
+                    SqlCommand com = new SqlCommand(Sql, conn);
+                    SqlDataReader rs = com.ExecuteReader();
+                    String filePath = "C:\\Users\\zanderkong\\Desktop\\SBSS_AC_BAL.csv";
+
+                    //before your loop
+                    StringBuilder csv = new StringBuilder();
+                    while (rs.Read())
+                    {
+                        DateTime? strDate = Convert.ToDateTime(rs["ts"]);
+                        String ts = strDate.Value.ToString("yyyyMMddhhmmss");
+
+                        String account_no = rs["account_no"].ToString();
+                        String company_code = rs["company_code"].ToString();
+                        String ccy = rs["ccy"].ToString();
+                        String day_open = rs["day_open"].ToString();
+                        String ledger_out = rs["ledger_out"].ToString();
+                        String t2_net_bs = rs["t2_net_bs"].ToString();
+                        String accrued_cr_int = rs["accrued_cr_int"].ToString();
+                        String credit_limit = rs["credit_limit"].ToString();
+                        String trade_limit = rs["trade_limit"].ToString();
+
+                        String newLine = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}", ts, account_no, company_code, ccy, day_open, ledger_out, t2_net_bs, accrued_cr_int, credit_limit, trade_limit);
+
+                        csv.AppendLine(newLine);  
+                    
+                    }
+                    File.WriteAllText(filePath, csv.ToString());
+                    rs.Close();
+
+                    //conn.Close();
+                    //conn.Dispose();
+                    //Console.ReadLine();
+
+                
+                    //conn.Open();
+
+                    String Sql1 = @"SELECT [account_no],
+                                       '' as a,
+                                       '' as b,
+                                       [ref_no],
+                                       '?' as io_code, 
+	                                   convert(nvarchar(MAX), [input_date], 112) as input_date,
+                                       convert(nvarchar(MAX), [trade_date], 112) as trade_date,
+	                                   convert(nvarchar(MAX),[settle_date], 112) as settle_date,
+                                       [company_code],
+                                       [io_type],
+                                       [ccy],
+                                       [amount],
+                                       '' as c,
+                                       [remark]
+                                FROM   [iBOSS2].[dbo].[TRN_CASH_IO]
+                                WHERE  [trade_date] = '2017-11-22' 
+                                order by [account_no]";
+
+                    SqlCommand com1 = new SqlCommand(Sql1, conn);
+                    SqlDataReader rs1 = com1.ExecuteReader();
+                    String filePath1 = "C:\\Users\\zanderkong\\Desktop\\SBSS_DAILY_CASHIO.csv";
+
+                    //before your loop
+                    StringBuilder csv1 = new StringBuilder();
+                    while (rs1.Read())
+                    {
+                        String account_no = rs1["account_no"].ToString();
+                        String a = rs1["a"].ToString();
+                        String b = rs1["b"].ToString();
+                        String ref_no = rs1["ref_no"].ToString();
+                        String io_code = rs1["io_code"].ToString();
+
+                        String input_date = rs1["input_date"].ToString();
+                        String trade_date = rs1["trade_date"].ToString();
+                        String settle_date = rs1["settle_date"].ToString();
+
+                        String company_code = rs1["company_code"].ToString();
+                        String io_type = rs1["io_type"].ToString();
+                        String ccy = rs1["ccy"].ToString();
+                        String amount = rs1["amount"].ToString();
+                        String c = rs1["c"].ToString();
+                        String remark = rs1["remark"].ToString();
+
+                        String newLine1 = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}",
+                            account_no, a, b, ref_no, io_code, input_date, trade_date, settle_date, company_code, io_type, ccy, amount,c,remark);
+
+                        csv1.AppendLine(newLine1);
+
+                    }
+
+                    File.WriteAllText(filePath1, csv1.ToString());
+                    rs1.Close();
+
+
+                    conn.Close();
+                    conn.Dispose();
+                    Console.ReadLine();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("error:" + ex.ToString());
+                Console.ReadLine();
+            }
+        }
+    }
+}
