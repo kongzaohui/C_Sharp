@@ -6,5 +6,6 @@
 ![image](https://github.com/kongzaohui/C_Sharp/blob/master/c%23.JPG)
 
 Settings
+![image](https://github.com/kongzaohui/C_Sharp/blob/master/settings.JPG)
 
 
