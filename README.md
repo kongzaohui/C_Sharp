@@ -5,3 +5,6 @@
 项目结构
 ![image](https://github.com/kongzaohui/C_Sharp/blob/master/c%23.JPG)
 
+Settings
+
+
